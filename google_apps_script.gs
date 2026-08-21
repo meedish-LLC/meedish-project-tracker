@@ -44,6 +44,29 @@ function doPost(e) {
     });
   };
 
+  if (body.action === 'verifyPassword') {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let settingsSheet = ss.getSheetByName('Settings');
+    
+    if (!settingsSheet) {
+      settingsSheet = ss.insertSheet('Settings');
+      settingsSheet.appendRow(['App Password', '1234']); // Default password
+    }
+    
+    const settingsData = settingsSheet.getDataRange().getValues();
+    let correctPassword = '1234';
+    
+    for (let i = 0; i < settingsData.length; i++) {
+      if (settingsData[i][0] === 'App Password') {
+        correctPassword = settingsData[i][1].toString();
+        break;
+      }
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({ success: body.password === correctPassword }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+
   if (body.action === 'add') {
     sheet.appendRow(createRowData(body));
     return ContentService.createTextOutput(JSON.stringify({ success: true, message: 'Added' }))

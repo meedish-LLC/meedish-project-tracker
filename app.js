@@ -2,7 +2,7 @@
  * Meedish Tracker App Logic (Advanced)
  */
 
-const GOOGLE_APP_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE';
+const GOOGLE_APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwz_CQzAhkbLzf0QzGAMUG-ZVLsKKz5rwxi0l5ZSUsJzcAiF6zTLQkRGw0WWWjbRTv3-w/exec';
 
 // === Authentication Logic ===
 const loginForm = document.getElementById('loginForm');
@@ -11,25 +11,35 @@ if (loginForm) {
     window.location.href = 'tracker.html';
   }
 
-  loginForm.addEventListener('submit', (e) => {
+  loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const pwd = document.getElementById('password').value;
     const btnText = document.getElementById('loginBtnText');
     const loader = document.getElementById('loginLoader');
 
-    // Any passcode works for demo, or require '1234'
-    if (pwd !== '1234') {
-      alert("Invalid passcode. Try '1234'");
-      return;
-    }
-
     btnText.style.display = 'none';
     loader.style.display = 'inline-block';
 
-    setTimeout(() => {
-      localStorage.setItem('meedish_user', 'true');
-      window.location.href = 'tracker.html';
-    }, 800);
+    try {
+      const response = await fetch(GOOGLE_APP_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'verifyPassword', password: pwd })
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        localStorage.setItem('meedish_user', 'true');
+        window.location.href = 'tracker.html';
+      } else {
+        alert("Invalid passcode. Please try again.");
+        btnText.style.display = 'inline-block';
+        loader.style.display = 'none';
+      }
+    } catch (error) {
+      alert("Error verifying password. Did you copy your script URL correctly?");
+      btnText.style.display = 'inline-block';
+      loader.style.display = 'none';
+    }
   });
 }
 
