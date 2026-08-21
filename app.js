@@ -2,13 +2,28 @@
  * Meedish Tracker App Logic (Advanced)
  */
 
-const GOOGLE_APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwz_CQzAhkbLzf0QzGAMUG-ZVLsKKz5rwxi0l5ZSUsJzcAiF6zTLQkRGw0WWWjbRTv3-w/exec';
+const GOOGLE_APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz9ULe1ysqsqwx4B59ES7BKRWrswE_mUTPaDGd8H149KMKK3aYRIQfebSwfK1ABO2vuzw/exec';
 
 // === Authentication Logic ===
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
   if (localStorage.getItem('meedish_user')) {
     window.location.href = 'tracker.html';
+  }
+
+  const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+  if (togglePasswordBtn) {
+    togglePasswordBtn.addEventListener('click', () => {
+      const pwdInput = document.getElementById('password');
+      const eyeIcon = document.getElementById('eyeIcon');
+      if (pwdInput.type === 'password') {
+        pwdInput.type = 'text';
+        eyeIcon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line>';
+      } else {
+        pwdInput.type = 'password';
+        eyeIcon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle>';
+      }
+    });
   }
 
   loginForm.addEventListener('submit', async (e) => {
@@ -26,7 +41,7 @@ if (loginForm) {
         body: JSON.stringify({ action: 'verifyPassword', password: pwd })
       });
       const data = await response.json();
-      
+
       if (data.success) {
         localStorage.setItem('meedish_user', 'true');
         window.location.href = 'tracker.html';
