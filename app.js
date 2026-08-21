@@ -1,14 +1,13 @@
 /**
- * Nexus Tracker App Logic (Advanced)
+ * Meedish Tracker App Logic (Advanced)
  */
 
 const GOOGLE_APP_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE';
-const IS_DEMO_MODE = true;
 
 // === Authentication Logic ===
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
-  if (localStorage.getItem('nexus_user')) {
+  if (localStorage.getItem('meedish_user')) {
     window.location.href = 'tracker.html';
   }
 
@@ -17,18 +16,18 @@ if (loginForm) {
     const pwd = document.getElementById('password').value;
     const btnText = document.getElementById('loginBtnText');
     const loader = document.getElementById('loginLoader');
-    
+
     // Any passcode works for demo, or require '1234'
     if (pwd !== '1234') {
       alert("Invalid passcode. Try '1234'");
       return;
     }
-    
+
     btnText.style.display = 'none';
     loader.style.display = 'inline-block';
-    
+
     setTimeout(() => {
-      localStorage.setItem('nexus_user', 'true');
+      localStorage.setItem('meedish_user', 'true');
       window.location.href = 'tracker.html';
     }, 800);
   });
@@ -39,13 +38,13 @@ const trackerApp = () => {
   const container = document.getElementById('projectsContainer');
   if (!container) return;
 
-  if (!localStorage.getItem('nexus_user')) {
+  if (!localStorage.getItem('meedish_user')) {
     window.location.href = 'index.html';
     return;
   }
 
   document.getElementById('logoutBtn').addEventListener('click', () => {
-    localStorage.removeItem('nexus_user');
+    localStorage.removeItem('meedish_user');
     window.location.href = 'index.html';
   });
 
@@ -53,24 +52,16 @@ const trackerApp = () => {
   let projects = [];
   let editingId = null;
 
-  // Mock data for demo
-  let mockProjects = [
-    { id: '1', wbs: '1.1', name: 'Database Architecture', lead: 'Alice', start: '2026-09-01', end: '2026-09-10', progress: 100, status: 'Completed', checkpoints: ['Design Schema', 'Setup DB'] },
-    { id: '2', wbs: '1.2', name: 'API Endpoints', lead: 'Bob', start: '2026-09-11', end: '2026-09-20', progress: 45, status: 'Active', checkpoints: ['Auth endpoints', 'User CRUD'] },
-    { id: '3', wbs: '2.1', name: 'Frontend Dashboard', lead: 'Charlie', start: '2026-09-15', end: '2026-10-05', progress: 10, status: 'Active', checkpoints: [] },
-  ];
-
   const fetchProjects = async () => {
     container.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;"><div class="loader loader-large"></div></td></tr>';
-    
+
     try {
-      if (IS_DEMO_MODE && GOOGLE_APP_SCRIPT_URL.includes('YOUR_GOOGLE')) {
-        await new Promise(resolve => setTimeout(resolve, 600));
-        projects = [...mockProjects];
-      } else {
-        const response = await fetch(GOOGLE_APP_SCRIPT_URL);
-        projects = await response.json();
+      if (GOOGLE_APP_SCRIPT_URL.includes('YOUR_GOOGLE')) {
+        container.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 40px;">Please configure your Google Apps Script URL.</td></tr>`;
+        return;
       }
+      const response = await fetch(GOOGLE_APP_SCRIPT_URL);
+      projects = await response.json();
       renderDashboard();
     } catch (error) {
       console.error(error);
@@ -82,18 +73,18 @@ const trackerApp = () => {
     const total = data.length;
     const completed = data.filter(p => p.progress >= 100 || p.status === 'Completed').length;
     const inMotion = total - completed;
-    
+
     const avgProg = total === 0 ? 0 : Math.round(data.reduce((acc, curr) => acc + parseInt(curr.progress || 0), 0) / total);
-    
+
     const today = new Date();
     const late = data.filter(p => p.progress < 100 && new Date(p.end) < today).length;
 
     document.getElementById('kpiTotal').innerText = total;
     document.getElementById('kpiTotalSub').innerText = `${inMotion} in motion`;
-    
+
     document.getElementById('kpiProgress').innerText = `${avgProg}%`;
     document.getElementById('kpiProgressSub').innerText = `${completed} tasks completed`;
-    
+
     document.getElementById('kpiLate').innerText = late;
     document.getElementById('kpiLateSub').innerText = `${late} due within 7 days`;
   };
@@ -155,12 +146,12 @@ const trackerApp = () => {
   const modal = document.getElementById('taskModal');
   const taskForm = document.getElementById('taskForm');
   const checkpointsContainer = document.getElementById('checkpointsContainer');
-  
+
   const renderModalCheckpoints = (checkpointsArr = []) => {
     checkpointsContainer.innerHTML = '';
     checkpointsArr.forEach(cp => addCheckpointInput(cp));
   };
-  
+
   const addCheckpointInput = (val = '') => {
     const div = document.createElement('div');
     div.style.display = 'flex';
@@ -177,14 +168,14 @@ const trackerApp = () => {
   document.getElementById('addCheckpointBtn').addEventListener('click', () => {
     addCheckpointInput();
   });
-  
+
   document.getElementById('newTaskBtn').addEventListener('click', () => {
     editingId = null;
     document.getElementById('modalTitle').innerText = 'New Task';
     taskForm.reset();
     document.getElementById('taskProgress').value = 0;
     renderModalCheckpoints([]);
-    
+
     // Auto increment WBS
     const maxWbs = projects.reduce((max, p) => {
       const parts = p.wbs.split('.');
@@ -192,7 +183,7 @@ const trackerApp = () => {
       return last > max ? last : max;
     }, 0);
     document.getElementById('taskWbs').value = `1.${maxWbs + 1}`;
-    
+
     modal.classList.add('active');
   });
 
@@ -202,14 +193,14 @@ const trackerApp = () => {
 
   window.openEditModal = (id) => {
     const p = projects.find(x => x.id === id);
-    if(!p) return;
+    if (!p) return;
     if (p.status === 'Completed') {
       alert("Completed tasks cannot be edited.");
       return;
     }
     editingId = id;
     document.getElementById('modalTitle').innerText = `Edit Task - ${p.wbs}`;
-    
+
     document.getElementById('taskId').value = p.id;
     document.getElementById('taskWbs').value = p.wbs;
     document.getElementById('taskName').value = p.name;
@@ -218,7 +209,7 @@ const trackerApp = () => {
     document.getElementById('taskEnd').value = p.end;
     document.getElementById('taskProgress').value = p.progress;
     renderModalCheckpoints(p.checkpoints || []);
-    
+
     modal.classList.add('active');
   };
 
@@ -226,10 +217,10 @@ const trackerApp = () => {
     e.preventDefault();
     const saveBtn = document.getElementById('saveTaskBtn');
     saveBtn.innerText = 'Saving...';
-    
+
     const progress = parseInt(document.getElementById('taskProgress').value);
     const status = progress >= 100 ? 'Completed' : 'Active';
-    
+
     const pData = {
       action: editingId ? 'update' : 'add',
       id: editingId || Date.now().toString(),
@@ -244,20 +235,10 @@ const trackerApp = () => {
     };
 
     try {
-      if (IS_DEMO_MODE && GOOGLE_APP_SCRIPT_URL.includes('YOUR_GOOGLE')) {
-        await new Promise(r => setTimeout(r, 400));
-        if (editingId) {
-          const idx = mockProjects.findIndex(x => x.id === editingId);
-          if (idx !== -1) mockProjects[idx] = { ...mockProjects[idx], ...pData };
-        } else {
-          mockProjects.push(pData);
-        }
-      } else {
-        await fetch(GOOGLE_APP_SCRIPT_URL, { method: 'POST', body: JSON.stringify(pData) });
-      }
+      await fetch(GOOGLE_APP_SCRIPT_URL, { method: 'POST', body: JSON.stringify(pData) });
       modal.classList.remove('active');
       fetchProjects();
-    } catch(err) {
+    } catch (err) {
       alert("Error saving.");
     } finally {
       saveBtn.innerText = 'Save Task';
@@ -266,19 +247,15 @@ const trackerApp = () => {
 
   window.deleteTask = async (id) => {
     const p = projects.find(x => x.id === id);
-    if(p && p.status === 'Completed') {
+    if (p && p.status === 'Completed') {
       alert("Completed tasks cannot be deleted.");
       return;
     }
-    if(!confirm("Are you sure you want to delete this task?")) return;
+    if (!confirm("Are you sure you want to delete this task?")) return;
     try {
-      if (IS_DEMO_MODE && GOOGLE_APP_SCRIPT_URL.includes('YOUR_GOOGLE')) {
-        mockProjects = mockProjects.filter(p => p.id !== id);
-      } else {
-        await fetch(GOOGLE_APP_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', id }) });
-      }
+      await fetch(GOOGLE_APP_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', id }) });
       fetchProjects();
-    } catch(err) {}
+    } catch (err) { }
   };
 
   document.getElementById('exportBtn').addEventListener('click', () => {

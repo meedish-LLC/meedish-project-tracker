@@ -1,4 +1,4 @@
-# Nexus Project Tracker
+# Meedish Project Tracker
 
 A beautiful, glassmorphic project tracker that uses Google Sheets as a database backend.
 
