@@ -354,3 +354,82 @@ tr:hover {
 @keyframes spin { to { transform: rotate(360deg); } }
 .fade-in { animation: fadeIn 0.3s ease-in forwards; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .tracker-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .tracker-header > div:last-child {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .tracker-header > div:last-child .btn {
+    flex: 1;
+    white-space: nowrap;
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+  
+  .table-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-group {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .filter-group .input-control {
+    width: 100% !important;
+  }
+
+  #newTaskBtn {
+    width: 100%;
+  }
+
+  .container {
+    padding: 16px 12px;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .modal-card {
+    margin: 16px;
+    max-height: calc(100vh - 32px);
+  }
+  
+  /* Handle modal inline styles */
+  #taskForm > div[style*="display: flex"] {
+    flex-direction: column;
+    gap: 0 !important;
+  }
+  
+  #taskForm > div > div[style*="flex: 1"],
+  #taskForm > div > div[style*="flex: 2"] {
+    width: 100%;
+  }
+  
+  #taskForm > div[style*="justify-content: flex-end"] {
+    flex-direction: column-reverse;
+    gap: 8px !important;
+  }
+  
+  #taskForm > div[style*="justify-content: flex-end"] .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
