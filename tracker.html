@@ -65,6 +65,7 @@
           <select id="statusFilter" class="input-control" style="width: 150px;">
             <option value="All">All Status</option>
             <option value="Active">Active</option>
+            <option value="Late">Late</option>
             <option value="Completed">Completed</option>
           </select>
         </div>
@@ -172,6 +173,23 @@
           <button type="submit" class="btn btn-primary" id="saveTaskBtn">Save Task</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Details Modal -->
+  <div class="modal-overlay" id="detailsModal">
+    <div class="modal-card" style="max-width: 500px; padding: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+        <div>
+          <h2 id="detailsModalTitle" style="margin: 0; font-size: 20px;">Title</h2>
+          <p style="color: var(--text-secondary); margin: 4px 0 0 0; font-size: 14px;">Full cell content</p>
+        </div>
+        <button type="button" class="btn btn-outline" id="closeDetailsBtn" style="padding: 6px; border-radius: 6px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div id="detailsModalContent" style="padding: 16px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-primary); min-height: 80px; font-size: 14px; line-height: 1.5; white-space: pre-wrap; word-break: break-word;">
+      </div>
     </div>
   </div>
 

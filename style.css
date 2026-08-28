@@ -269,6 +269,7 @@ tr:hover {
 }
 .status-active { background: var(--success-bg); color: var(--success-text); }
 .status-completed { background: var(--pending-bg); color: var(--pending-text); }
+.status-late { background: #fee2e2; color: #991b1b; }
 
 .progress-bar-bg {
   background: var(--border-color);

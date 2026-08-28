@@ -2,9 +2,31 @@ function doGet(e) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const data = sheet.getDataRange().getValues();
   
-  if (data.length <= 1) return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+  const expectedHeaders = ['id', 'wbs', 'name', 'description', 'lead', 'codeveloper', 'start', 'end', 'progress', 'status', 'checkpoints'];
+  
+  if (data.length === 0) {
+    sheet.appendRow(expectedHeaders);
+    return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+  }
 
-  const headers = data[0];
+  let headers = data[0];
+  let headersChanged = false;
+  
+  expectedHeaders.forEach(field => {
+    if (!headers.includes(field)) {
+      headers.push(field);
+      headersChanged = true;
+    }
+  });
+  
+  if (headersChanged) {
+    sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
+
+  if (data.length <= 1) {
+    return ContentService.createTextOutput(JSON.stringify([])).setMimeType(ContentService.MimeType.JSON);
+  }
+  
   const rows = data.slice(1);
   
   const result = rows.map(row => {

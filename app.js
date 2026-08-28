@@ -151,20 +151,38 @@ const trackerApp = () => {
     const searchStr = document.getElementById('searchInput').value.toLowerCase();
     const statusFilter = document.getElementById('statusFilter').value;
 
-    let filtered = projects.filter(p => {
+    // First map to include displayStatus
+    let processedProjects = projects.map(p => {
+      let displayStatus = (p.status || '').toString();
+      if (displayStatus === 'Active') {
+        const endDate = new Date(p.end);
+        endDate.setHours(23, 59, 59, 999);
+        if (endDate < new Date()) {
+          displayStatus = 'Late';
+        }
+      }
+      return { ...p, displayStatus };
+    });
+
+    let filtered = processedProjects.filter(p => {
       const matchSearch = (p.name || '').toString().toLowerCase().includes(searchStr) || 
                           (p.wbs || '').toString().toLowerCase().includes(searchStr) || 
                           (p.lead || '').toString().toLowerCase().includes(searchStr);
-      const matchStatus = statusFilter === 'All' || p.status === statusFilter;
+      const matchStatus = statusFilter === 'All' || p.displayStatus === statusFilter;
       return matchSearch && matchStatus;
     });
 
-    updateKPIs(projects); // Update KPIs based on ALL data, or filtered data depending on requirement. Usually all data.
+    updateKPIs(processedProjects); // Update KPIs based on ALL data, or filtered data depending on requirement. Usually all data.
 
     if (filtered.length === 0) {
       container.innerHTML = `<tr><td colspan="12" style="text-align: center; padding: 40px; color: var(--text-secondary);">No tasks found.</td></tr>`;
       return;
     }
+
+    const escapeJS = (str) => {
+      if (!str) return '';
+      return str.toString().replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    };
 
     container.innerHTML = filtered.map(p => {
       const { days, workDays } = calculateDays(p.start, p.end);
@@ -176,12 +194,12 @@ const trackerApp = () => {
           ${p.checkpoints && p.checkpoints.length > 0 ? `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">&#8627; ${p.checkpoints.length} checkpoints</div>` : ''}
         </td>
         <td>
-          <div style="max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary);" title="${p.description || ''}">${p.description || '-'}</div>
+          <div style="max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); cursor: pointer;" title="Click to view full description" onclick="showDetails('Description', '${escapeJS(p.description || '-')}')">${p.description || '-'}</div>
         </td>
-        <td>${p.lead}</td>
-        <td>${p.codeveloper || '-'}</td>
-        <td style="white-space: nowrap;">${formatDate(p.start)}</td>
-        <td style="white-space: nowrap;">${formatDate(p.end)}</td>
+        <td style="cursor: pointer;" title="Click to view full lead" onclick="showDetails('Lead', '${escapeJS(p.lead || '-')}')">${p.lead}</td>
+        <td style="cursor: pointer;" title="Click to view full co-developer" onclick="showDetails('Co-Developer', '${escapeJS(p.codeveloper || '-')}')">${p.codeveloper || '-'}</td>
+        <td style="white-space: nowrap; cursor: pointer;" title="Click to view full start date" onclick="showDetails('Start Date', '${escapeJS(formatDate(p.start))}')">${formatDate(p.start)}</td>
+        <td style="white-space: nowrap; cursor: pointer;" title="Click to view full end date" onclick="showDetails('End Date', '${escapeJS(formatDate(p.end))}')">${formatDate(p.end)}</td>
         <td style="font-weight: 600; text-align: center;">${days}</td>
         <td style="font-weight: 600; text-align: center;">${workDays}</td>
         <td style="min-width: 100px;">
@@ -192,7 +210,7 @@ const trackerApp = () => {
             <div class="progress-bar-fill" style="width: ${p.progress}%"></div>
           </div>
         </td>
-        <td><span class="status-badge status-${(p.status || '').toString().toLowerCase()}">${p.status}</span></td>
+        <td><span class="status-badge status-${(p.displayStatus || '').toString().toLowerCase()}">${p.displayStatus}</span></td>
         <td style="text-align: right; white-space: nowrap;">
           <button class="action-btn" onclick="openEditModal('${p.id}')" title="Edit" ${p.status === 'Completed' ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -214,6 +232,18 @@ const trackerApp = () => {
   const modal = document.getElementById('taskModal');
   const taskForm = document.getElementById('taskForm');
   const checkpointsContainer = document.getElementById('checkpointsContainer');
+  
+  // Details Modal Logic
+  const detailsModal = document.getElementById('detailsModal');
+  window.showDetails = (title, text) => {
+    document.getElementById('detailsModalTitle').innerText = title;
+    document.getElementById('detailsModalContent').innerText = text;
+    detailsModal.classList.add('active');
+  };
+  
+  document.getElementById('closeDetailsBtn')?.addEventListener('click', () => {
+    detailsModal.classList.remove('active');
+  });
 
   const renderModalCheckpoints = (checkpointsArr = []) => {
     checkpointsContainer.innerHTML = '';
