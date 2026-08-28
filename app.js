@@ -181,7 +181,7 @@ const trackerApp = () => {
 
     const escapeJS = (str) => {
       if (!str) return '';
-      return str.toString().replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      return str.toString().replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n');
     };
 
     container.innerHTML = filtered.map(p => {
@@ -191,7 +191,7 @@ const trackerApp = () => {
         <td style="font-weight: 500;">${p.wbs}</td>
         <td>
           <div style="font-weight: 500;">${p.name}</div>
-          ${p.checkpoints && p.checkpoints.length > 0 ? `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">&#8627; ${p.checkpoints.length} checkpoints</div>` : ''}
+          ${p.checkpoints && p.checkpoints.length > 0 ? `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; cursor: pointer;" title="Click to view checkpoints" onclick="showDetails('Checkpoints', '${escapeJS(p.checkpoints.map(cp => '• ' + cp).join('\n'))}')">&#8627; ${p.checkpoints.length} checkpoints</div>` : ''}
         </td>
         <td>
           <div style="max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); cursor: pointer;" title="Click to view full description" onclick="showDetails('Description', '${escapeJS(p.description || '-')}')">${p.description || '-'}</div>
@@ -243,6 +243,13 @@ const trackerApp = () => {
   
   document.getElementById('closeDetailsBtn')?.addEventListener('click', () => {
     detailsModal.classList.remove('active');
+  });
+
+  // Close modals on outside click
+  window.addEventListener('click', (e) => {
+    if (e.target.classList.contains('modal-overlay')) {
+      e.target.classList.remove('active');
+    }
   });
 
   const renderModalCheckpoints = (checkpointsArr = []) => {
