@@ -152,7 +152,9 @@ const trackerApp = () => {
     const statusFilter = document.getElementById('statusFilter').value;
 
     let filtered = projects.filter(p => {
-      const matchSearch = p.name.toLowerCase().includes(searchStr) || p.wbs.toLowerCase().includes(searchStr) || p.lead.toLowerCase().includes(searchStr);
+      const matchSearch = (p.name || '').toString().toLowerCase().includes(searchStr) || 
+                          (p.wbs || '').toString().toLowerCase().includes(searchStr) || 
+                          (p.lead || '').toString().toLowerCase().includes(searchStr);
       const matchStatus = statusFilter === 'All' || p.status === statusFilter;
       return matchSearch && matchStatus;
     });
@@ -190,7 +192,7 @@ const trackerApp = () => {
             <div class="progress-bar-fill" style="width: ${p.progress}%"></div>
           </div>
         </td>
-        <td><span class="status-badge status-${p.status.toLowerCase()}">${p.status}</span></td>
+        <td><span class="status-badge status-${(p.status || '').toString().toLowerCase()}">${p.status}</span></td>
         <td style="text-align: right; white-space: nowrap;">
           <button class="action-btn" onclick="openEditModal('${p.id}')" title="Edit" ${p.status === 'Completed' ? 'disabled style="opacity: 0.3; cursor: not-allowed;"' : ''}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
@@ -244,7 +246,8 @@ const trackerApp = () => {
 
     // Auto increment WBS
     const maxWbs = projects.reduce((max, p) => {
-      const parts = p.wbs.split('.');
+      if (p.wbs === undefined || p.wbs === null) return max;
+      const parts = p.wbs.toString().split('.');
       const last = parseInt(parts[parts.length - 1]) || 0;
       return last > max ? last : max;
     }, 0);
@@ -258,7 +261,7 @@ const trackerApp = () => {
   });
 
   window.openEditModal = (id) => {
-    const p = projects.find(x => x.id === id);
+    const p = projects.find(x => String(x.id) === String(id));
     if (!p) return;
     if (p.status === 'Completed') {
       alert("Completed tasks cannot be edited.");
@@ -325,7 +328,7 @@ const trackerApp = () => {
   });
 
   window.deleteTask = async (id) => {
-    const p = projects.find(x => x.id === id);
+    const p = projects.find(x => String(x.id) === String(id));
     if (p && p.status === 'Completed') {
       alert("Completed tasks cannot be deleted.");
       return;
