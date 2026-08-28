@@ -77,12 +77,45 @@ const trackerApp = () => {
   let projects = [];
   let editingId = null;
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const calculateDays = (startStr, endStr) => {
+    const start = new Date(startStr);
+    const end = new Date(endStr);
+    if (isNaN(start) || isNaN(end)) return { days: 0, workDays: 0 };
+    
+    start.setHours(0,0,0,0);
+    end.setHours(0,0,0,0);
+    
+    const diffTime = end - start;
+    const days = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    
+    if (days < 0) return { days: 0, workDays: 0 };
+    
+    let workDays = 0;
+    let current = new Date(start);
+    while (current <= end) {
+      const dayOfWeek = current.getDay();
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        workDays++;
+      }
+      current.setDate(current.getDate() + 1);
+    }
+    
+    return { days, workDays };
+  };
+
   const fetchProjects = async () => {
-    container.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 40px;"><div class="loader loader-large"></div></td></tr>';
+    container.innerHTML = '<tr><td colspan="12" style="text-align: center; padding: 40px;"><div class="loader loader-large"></div></td></tr>';
 
     try {
       if (GOOGLE_APP_SCRIPT_URL.includes('YOUR_GOOGLE')) {
-        container.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 40px;">Please configure your Google Apps Script URL.</td></tr>`;
+        container.innerHTML = `<tr><td colspan="12" style="text-align: center; color: var(--text-secondary); padding: 40px;">Please configure your Google Apps Script URL.</td></tr>`;
         return;
       }
       const response = await fetch(GOOGLE_APP_SCRIPT_URL);
@@ -90,7 +123,7 @@ const trackerApp = () => {
       renderDashboard();
     } catch (error) {
       console.error(error);
-      container.innerHTML = `<tr><td colspan="8" style="text-align: center; color: red;">Failed to load data.</td></tr>`;
+      container.innerHTML = `<tr><td colspan="12" style="text-align: center; color: red;">Failed to load data.</td></tr>`;
     }
   };
 
@@ -127,22 +160,30 @@ const trackerApp = () => {
     updateKPIs(projects); // Update KPIs based on ALL data, or filtered data depending on requirement. Usually all data.
 
     if (filtered.length === 0) {
-      container.innerHTML = `<tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--text-secondary);">No tasks found.</td></tr>`;
+      container.innerHTML = `<tr><td colspan="12" style="text-align: center; padding: 40px; color: var(--text-secondary);">No tasks found.</td></tr>`;
       return;
     }
 
-    container.innerHTML = filtered.map(p => `
+    container.innerHTML = filtered.map(p => {
+      const { days, workDays } = calculateDays(p.start, p.end);
+      return `
       <tr class="fade-in">
         <td style="font-weight: 500;">${p.wbs}</td>
         <td>
           <div style="font-weight: 500;">${p.name}</div>
           ${p.checkpoints && p.checkpoints.length > 0 ? `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">&#8627; ${p.checkpoints.length} checkpoints</div>` : ''}
         </td>
-        <td>${p.lead}</td>
-        <td>${p.start}</td>
-        <td>${p.end}</td>
         <td>
-          <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px; margin-bottom: 2px;">
+          <div style="max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary);" title="${p.description || ''}">${p.description || '-'}</div>
+        </td>
+        <td>${p.lead}</td>
+        <td>${p.codeveloper || '-'}</td>
+        <td style="white-space: nowrap;">${formatDate(p.start)}</td>
+        <td style="white-space: nowrap;">${formatDate(p.end)}</td>
+        <td style="font-weight: 600; text-align: center;">${days}</td>
+        <td style="font-weight: 600; text-align: center;">${workDays}</td>
+        <td style="min-width: 100px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px; margin-bottom: 2px; font-weight: 600;">
             <span>${p.progress}%</span>
           </div>
           <div class="progress-bar-bg">
@@ -155,11 +196,11 @@ const trackerApp = () => {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
           </button>
           <button class="action-btn" onclick="deleteTask('${p.id}')" title="Delete" ${p.status === 'Completed' ? 'disabled style="color: #ef4444; opacity: 0.3; cursor: not-allowed;"' : 'style="color: #ef4444;"'}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2-2v2"></path></svg>
           </button>
         </td>
       </tr>
-    `).join('');
+    `}).join('');
   };
 
   // Listeners for filters
@@ -227,12 +268,23 @@ const trackerApp = () => {
     document.getElementById('modalTitle').innerText = `Edit Task - ${p.wbs}`;
 
     document.getElementById('taskId').value = p.id;
-    document.getElementById('taskWbs').value = p.wbs;
-    document.getElementById('taskName').value = p.name;
-    document.getElementById('taskLead').value = p.lead;
-    document.getElementById('taskStart').value = p.start;
-    document.getElementById('taskEnd').value = p.end;
-    document.getElementById('taskProgress').value = p.progress;
+    document.getElementById('taskWbs').value = p.wbs || '';
+    document.getElementById('taskName').value = p.name || '';
+    document.getElementById('taskDescription').value = p.description || '';
+    document.getElementById('taskLead').value = p.lead || '';
+    document.getElementById('taskCoDeveloper').value = p.codeveloper || '';
+    
+    // Format dates for input type="date" which requires YYYY-MM-DD
+    const formatDateForInput = (d) => {
+      if (!d) return '';
+      const date = new Date(d);
+      if (isNaN(date)) return d;
+      return date.toISOString().split('T')[0];
+    };
+    
+    document.getElementById('taskStart').value = formatDateForInput(p.start);
+    document.getElementById('taskEnd').value = formatDateForInput(p.end);
+    document.getElementById('taskProgress').value = p.progress || 0;
     renderModalCheckpoints(p.checkpoints || []);
 
     modal.classList.add('active');
@@ -251,7 +303,9 @@ const trackerApp = () => {
       id: editingId || Date.now().toString(),
       wbs: document.getElementById('taskWbs').value,
       name: document.getElementById('taskName').value,
+      description: document.getElementById('taskDescription').value,
       lead: document.getElementById('taskLead').value,
+      codeveloper: document.getElementById('taskCoDeveloper').value,
       start: document.getElementById('taskStart').value,
       end: document.getElementById('taskEnd').value,
       progress: progress,
@@ -284,9 +338,9 @@ const trackerApp = () => {
   };
 
   document.getElementById('exportBtn').addEventListener('click', () => {
-    let csvContent = "data:text/csv;charset=utf-8,WBS,Task Name,Lead,Start Date,End Date,Progress,Status\n";
+    let csvContent = "data:text/csv;charset=utf-8,WBS,Task Name,Description,Lead,Co-Developer,Start Date,End Date,Progress,Status\n";
     projects.forEach(p => {
-      const row = `${p.wbs},"${p.name}","${p.lead}",${p.start},${p.end},${p.progress}%,${p.status}`;
+      const row = `${p.wbs},"${p.name}","${p.description || ''}","${p.lead}","${p.codeveloper || ''}",${p.start},${p.end},${p.progress}%,${p.status}`;
       csvContent += row + "\n";
     });
     const encodedUri = encodeURI(csvContent);

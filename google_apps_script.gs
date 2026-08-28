@@ -32,7 +32,26 @@ function doPost(e) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const body = JSON.parse(e.postData.contents);
   const data = sheet.getDataRange().getValues();
-  const headers = data[0];
+  let headers = data.length > 0 ? data[0] : [];
+  
+  // Enforce and append missing headers dynamically for new features
+  const expectedHeaders = ['id', 'wbs', 'name', 'description', 'lead', 'codeveloper', 'start', 'end', 'progress', 'status', 'checkpoints'];
+  let headersChanged = false;
+  
+  if (headers.length === 0) {
+    headers = expectedHeaders;
+    sheet.appendRow(headers);
+  } else {
+    expectedHeaders.forEach(field => {
+      if (!headers.includes(field)) {
+        headers.push(field);
+        headersChanged = true;
+      }
+    });
+    if (headersChanged) {
+      sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+    }
+  }
   
   // Create row data based on headers to ensure column alignment
   const createRowData = (taskData) => {
@@ -40,7 +59,7 @@ function doPost(e) {
       if (header === 'checkpoints') {
         return JSON.stringify(taskData[header] || []);
       }
-      return taskData[header] || '';
+      return taskData[header] !== undefined ? taskData[header] : '';
     });
   };
 

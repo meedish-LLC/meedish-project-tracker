@@ -83,18 +83,22 @@
           <thead>
             <tr>
               <th>WBS</th>
-              <th>Task</th>
-              <th>Lead</th>
-              <th>Start</th>
-              <th>End</th>
-              <th>Progress</th>
-              <th>Status</th>
-              <th style="text-align: right;">Actions</th>
+              <th>TASK</th>
+              <th>DESCRIPTION</th>
+              <th>LEAD</th>
+              <th>CO-DEVELOPER</th>
+              <th>START</th>
+              <th>END</th>
+              <th style="text-align: center;">DAYS</th>
+              <th style="text-align: center;">WORK DAYS</th>
+              <th>% DONE</th>
+              <th>STATUS</th>
+              <th style="text-align: right;"></th>
             </tr>
           </thead>
           <tbody id="projectsContainer">
             <tr>
-              <td colspan="8" style="text-align: center; padding: 40px;">
+              <td colspan="12" style="text-align: center; padding: 40px;">
                 <div class="loader loader-large"></div>
               </td>
             </tr>
@@ -116,15 +120,24 @@
             <label>WBS (ID)</label>
             <input type="text" id="taskWbs" class="input-control" required>
           </div>
-          <div class="input-group" style="flex: 2;">
+          <div class="input-group" style="flex: 1;">
             <label>Lead</label>
             <input type="text" id="taskLead" class="input-control" required>
+          </div>
+          <div class="input-group" style="flex: 1;">
+            <label>Co-Developer</label>
+            <input type="text" id="taskCoDeveloper" class="input-control">
           </div>
         </div>
 
         <div class="input-group">
           <label>Task Name</label>
           <input type="text" id="taskName" class="input-control" required>
+        </div>
+
+        <div class="input-group">
+          <label>Description</label>
+          <textarea id="taskDescription" class="input-control" rows="2" style="resize: vertical;"></textarea>
         </div>
 
         <div style="display: flex; gap: 16px;">
