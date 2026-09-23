@@ -41,9 +41,9 @@
         <span class="kpi-subtext" id="kpiTotalSub">0 in motion</span>
       </div>
       <div class="glass-panel kpi-card">
-        <span class="kpi-title">Average Progress</span>
-        <span class="kpi-value" id="kpiProgress">0%</span>
-        <span class="kpi-subtext" id="kpiProgressSub">0 tasks completed</span>
+        <span class="kpi-title">Completed Tasks</span>
+        <span class="kpi-value" id="kpiProgress">0</span>
+        <span class="kpi-subtext" id="kpiProgressSub">Out of 0 total</span>
       </div>
       <div class="glass-panel kpi-card">
         <span class="kpi-title">Late Tasks</span>
@@ -92,7 +92,7 @@
               <th>END</th>
               <th style="text-align: center;">DAYS</th>
               <th style="text-align: center;">WORK DAYS</th>
-              <th>% DONE</th>
+              <th>PROGRESS</th>
               <th>STATUS</th>
               <th style="text-align: right;"></th>
             </tr>
@@ -152,19 +152,17 @@
           </div>
         </div>
 
-        <div class="input-group">
-          <label>% Done</label>
-          <input type="number" id="taskProgress" class="input-control" min="0" max="100" value="0" required>
-        </div>
-
-        <div class="input-group" style="margin-top: 16px;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-            <label style="margin: 0;">Checkpoints (Sub-tasks)</label>
-            <button type="button" id="addCheckpointBtn" class="btn btn-outline"
-              style="padding: 4px 8px; font-size: 12px;">+ Add Checkpoint</button>
+        <div style="display: flex; gap: 16px;">
+          <div class="input-group" style="flex: 1;">
+            <label>Progress (Comments)</label>
+            <textarea id="taskProgress" class="input-control" rows="3" style="resize: vertical;"></textarea>
           </div>
-          <div id="checkpointsContainer" style="display: flex; flex-direction: column; gap: 8px;">
-            <!-- Checkpoints injected here -->
+          <div class="input-group" style="flex: 1;">
+            <label>Status</label>
+            <select id="taskStatus" class="input-control">
+              <option value="Active">Active</option>
+              <option value="Completed">Completed</option>
+            </select>
           </div>
         </div>
 

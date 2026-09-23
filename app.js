@@ -129,19 +129,17 @@ const trackerApp = () => {
 
   const updateKPIs = (data) => {
     const total = data.length;
-    const completed = data.filter(p => p.progress >= 100 || p.status === 'Completed').length;
+    const completed = data.filter(p => p.status === 'Completed').length;
     const inMotion = total - completed;
 
-    const avgProg = total === 0 ? 0 : Math.round(data.reduce((acc, curr) => acc + parseInt(curr.progress || 0), 0) / total);
-
     const today = new Date();
-    const late = data.filter(p => p.progress < 100 && new Date(p.end) < today).length;
+    const late = data.filter(p => p.status !== 'Completed' && new Date(p.end) < today).length;
 
     document.getElementById('kpiTotal').innerText = total;
     document.getElementById('kpiTotalSub').innerText = `${inMotion} in motion`;
 
-    document.getElementById('kpiProgress').innerText = `${avgProg}%`;
-    document.getElementById('kpiProgressSub').innerText = `${completed} tasks completed`;
+    document.getElementById('kpiProgress').innerText = completed;
+    document.getElementById('kpiProgressSub').innerText = `Out of ${total} total`;
 
     document.getElementById('kpiLate').innerText = late;
     document.getElementById('kpiLateSub').innerText = `${late} due within 7 days`;
@@ -191,7 +189,6 @@ const trackerApp = () => {
         <td style="font-weight: 500;">${p.wbs}</td>
         <td>
           <div style="font-weight: 500;">${p.name}</div>
-          ${p.checkpoints && p.checkpoints.length > 0 ? `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px; cursor: pointer;" title="Click to view checkpoints" onclick="showDetails('Checkpoints', '${escapeJS(p.checkpoints.map(cp => '• ' + cp).join('\n'))}')">&#8627; ${p.checkpoints.length} checkpoints</div>` : ''}
         </td>
         <td>
           <div style="max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); cursor: pointer;" title="Click to view full description" onclick="showDetails('Description', '${escapeJS(p.description || '-')}')">${p.description || '-'}</div>
@@ -202,13 +199,8 @@ const trackerApp = () => {
         <td style="white-space: nowrap; cursor: pointer;" title="Click to view full end date" onclick="showDetails('End Date', '${escapeJS(formatDate(p.end))}')">${formatDate(p.end)}</td>
         <td style="font-weight: 600; text-align: center;">${days}</td>
         <td style="font-weight: 600; text-align: center;">${workDays}</td>
-        <td style="min-width: 100px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px; margin-bottom: 2px; font-weight: 600;">
-            <span>${p.progress}%</span>
-          </div>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" style="width: ${p.progress}%"></div>
-          </div>
+        <td>
+          <div style="max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-secondary); cursor: pointer;" title="Click to view full progress comments" onclick="showDetails('Progress Comments', '${escapeJS(p.progress || '-')}')">${p.progress || '-'}</div>
         </td>
         <td><span class="status-badge status-${(p.displayStatus || '').toString().toLowerCase()}">${p.displayStatus}</span></td>
         <td style="text-align: right; white-space: nowrap;">
@@ -231,7 +223,6 @@ const trackerApp = () => {
   // Modal Logic
   const modal = document.getElementById('taskModal');
   const taskForm = document.getElementById('taskForm');
-  const checkpointsContainer = document.getElementById('checkpointsContainer');
   
   // Details Modal Logic
   const detailsModal = document.getElementById('detailsModal');
@@ -252,34 +243,12 @@ const trackerApp = () => {
     }
   });
 
-  const renderModalCheckpoints = (checkpointsArr = []) => {
-    checkpointsContainer.innerHTML = '';
-    checkpointsArr.forEach(cp => addCheckpointInput(cp));
-  };
-
-  const addCheckpointInput = (val = '') => {
-    const div = document.createElement('div');
-    div.style.display = 'flex';
-    div.style.gap = '8px';
-    div.innerHTML = `
-      <input type="text" class="input-control checkpoint-input" placeholder="Checkpoint description" value="${val}" required style="padding: 8px 12px; flex: 1;">
-      <button type="button" class="btn btn-outline" onclick="this.parentElement.remove()" style="padding: 8px 12px; color: #ef4444;" title="Remove Checkpoint">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-      </button>
-    `;
-    checkpointsContainer.appendChild(div);
-  };
-
-  document.getElementById('addCheckpointBtn').addEventListener('click', () => {
-    addCheckpointInput();
-  });
-
   document.getElementById('newTaskBtn').addEventListener('click', () => {
     editingId = null;
     document.getElementById('modalTitle').innerText = 'New Task';
     taskForm.reset();
-    document.getElementById('taskProgress').value = 0;
-    renderModalCheckpoints([]);
+    document.getElementById('taskProgress').value = '';
+    document.getElementById('taskStatus').value = 'Active';
 
     // Auto increment WBS
     const maxWbs = projects.reduce((max, p) => {
@@ -324,8 +293,8 @@ const trackerApp = () => {
     
     document.getElementById('taskStart').value = formatDateForInput(p.start);
     document.getElementById('taskEnd').value = formatDateForInput(p.end);
-    document.getElementById('taskProgress').value = p.progress || 0;
-    renderModalCheckpoints(p.checkpoints || []);
+    document.getElementById('taskProgress').value = p.progress || '';
+    document.getElementById('taskStatus').value = p.status || 'Active';
 
     modal.classList.add('active');
   };
@@ -334,9 +303,6 @@ const trackerApp = () => {
     e.preventDefault();
     const saveBtn = document.getElementById('saveTaskBtn');
     saveBtn.innerText = 'Saving...';
-
-    const progress = parseInt(document.getElementById('taskProgress').value);
-    const status = progress >= 100 ? 'Completed' : 'Active';
 
     const pData = {
       action: editingId ? 'update' : 'add',
@@ -348,9 +314,8 @@ const trackerApp = () => {
       codeveloper: document.getElementById('taskCoDeveloper').value,
       start: document.getElementById('taskStart').value,
       end: document.getElementById('taskEnd').value,
-      progress: progress,
-      status: status,
-      checkpoints: Array.from(document.querySelectorAll('.checkpoint-input')).map(el => el.value)
+      progress: document.getElementById('taskProgress').value,
+      status: document.getElementById('taskStatus').value
     };
 
     try {
@@ -380,7 +345,7 @@ const trackerApp = () => {
   document.getElementById('exportBtn').addEventListener('click', () => {
     let csvContent = "data:text/csv;charset=utf-8,WBS,Task Name,Description,Lead,Co-Developer,Start Date,End Date,Progress,Status\n";
     projects.forEach(p => {
-      const row = `${p.wbs},"${p.name}","${p.description || ''}","${p.lead}","${p.codeveloper || ''}",${p.start},${p.end},${p.progress}%,${p.status}`;
+      const row = `${p.wbs},"${p.name}","${p.description || ''}","${p.lead}","${p.codeveloper || ''}",${p.start},${p.end},"${p.progress || ''}",${p.status}`;
       csvContent += row + "\n";
     });
     const encodedUri = encodeURI(csvContent);

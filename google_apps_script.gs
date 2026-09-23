@@ -2,7 +2,7 @@ function doGet(e) {
   const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   const data = sheet.getDataRange().getValues();
   
-  const expectedHeaders = ['id', 'wbs', 'name', 'description', 'lead', 'codeveloper', 'start', 'end', 'progress', 'status', 'checkpoints'];
+  const expectedHeaders = ['id', 'wbs', 'name', 'description', 'lead', 'codeveloper', 'start', 'end', 'progress', 'status'];
   
   if (data.length === 0) {
     sheet.appendRow(expectedHeaders);
@@ -32,16 +32,7 @@ function doGet(e) {
   const result = rows.map(row => {
     let obj = {};
     headers.forEach((header, i) => {
-      // Checkpoints are stored as a JSON string, let's parse them back
-      if (header === 'checkpoints') {
-        try {
-          obj[header] = JSON.parse(row[i] || "[]");
-        } catch(e) {
-          obj[header] = [];
-        }
-      } else {
-        obj[header] = row[i];
-      }
+      obj[header] = row[i];
     });
     return obj;
   });
@@ -57,7 +48,7 @@ function doPost(e) {
   let headers = data.length > 0 ? data[0] : [];
   
   // Enforce and append missing headers dynamically for new features
-  const expectedHeaders = ['id', 'wbs', 'name', 'description', 'lead', 'codeveloper', 'start', 'end', 'progress', 'status', 'checkpoints'];
+  const expectedHeaders = ['id', 'wbs', 'name', 'description', 'lead', 'codeveloper', 'start', 'end', 'progress', 'status'];
   let headersChanged = false;
   
   if (headers.length === 0) {
@@ -78,9 +69,6 @@ function doPost(e) {
   // Create row data based on headers to ensure column alignment
   const createRowData = (taskData) => {
     return headers.map(header => {
-      if (header === 'checkpoints') {
-        return JSON.stringify(taskData[header] || []);
-      }
       return taskData[header] !== undefined ? taskData[header] : '';
     });
   };
